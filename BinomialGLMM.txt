@@ -1,0 +1,32 @@
+
+model{
+#1A. Priors regression parameters
+for (i in 1:K) { beta[i]  ~ dnorm(0, 0.0001) }
+#1B. Priors for random intercepts
+for (i in 1:Numre) {a[i] ~ dnorm(0, tau) }
+#1D. Priors for variance random intercepts
+sigma ~ dunif(0, 5)
+tau  <- 1 / (sigma * sigma)
+#2. Likelihood
+for (i in 1:N) {
+Y[i]          ~ dbin(Pi[i], Trials[i])
+logit(Pi[i]) <- inprod(beta[], X[i,]) + a[re[i]]
+}
+#3. Expectes values Y, variance Y, Pearson residuals
+for (i in 1:N) {
+ExpY[i] <- Pi[i] * Trials[i]
+VarY[i] <- Pi[i] * Trials[i] * (1 - Pi[i])
+E[i]    <- (Y[i]  - ExpY[i]) / sqrt(VarY[i])
+}
+#Simulate data with mean/variance taken from the fitted model
+for (i in 1:N) {
+YNew[i] ~  dbin(Pi[i], Trials[i])
+ENew[i] <- (YNew[i] - ExpY[i]) / sqrt(VarY[i])
+D[i]    <- pow(E[i], 2)
+DNew[i] <- pow(ENew[i], 2)
+}
+#Sum of squared Pearson residuals for observed and new data
+Fit    <- sum(D[1:N])
+FitNew <- sum(DNew[1:N])
+}
+

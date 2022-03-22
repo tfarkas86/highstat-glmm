@@ -1,0 +1,23 @@
+
+model{
+#1A. Priors beta and sigma
+for (i in 1:K) { beta[i] ~ dnorm(0, 0.0001)}
+#1B. Priors random effects and sigma_Plot
+tau_Plot <- 1 / (sigma_Plot * sigma_Plot)
+for (i in 1:Nre) { a[i] ~ dnorm(0, tau_Plot)}
+num           ~ dnorm(0, 0.0016) # 1 / 25^2
+denom         ~ dnorm(0, 1)
+sigma_Plot   <- abs(num / denom)
+#2. Likelihood
+for (i in 1:N) {
+Y[i]          ~ dbern(Pi[i])
+logit(Pi[i]) <- eta[i]
+eta[i]       <- inprod(beta[], X[i,]) + a[Plot[i]]
+#Saving computer time
+##3. Discrepancy measures
+#Exp[i] <- Pi[i]
+#Var[i] <- Pi[i] * (1 - Pi[i])
+#E[i]   <- (Y[i]  - Exp[i]) / sqrt(Var[i])
+}
+}
+

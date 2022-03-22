@@ -1,0 +1,37 @@
+
+model{
+    #1A. Priors beta 
+    for (i in 1:K) { beta[i] ~ dnorm(0, 0.0001)}
+
+    #2. Likelihood
+    for (i in 1:N) {
+      Y[i]        ~ dpois(mu[i])      
+      log(mu[i]) <- inprod(beta[], X[i,]) 
+      # or <- beta[1] * X[i, 1] + beta[2] * X[i, 2] + beta[3] * X[i, 3] + beta[4] * X[i, 4]
+     
+      #3. Discrepancy measures 
+      #Pearson residuals (normalized)
+
+      Exp[i] <- mu[i] 
+      Var[i] <- mu[i]
+      E[i]   <- (Y[i]  - Exp[i]) / sqrt(Var[i])    
+  
+      #Simulated data with mean/variance taken from the fitted model 
+      #See text under block B, below.  
+
+      YNew[i] ~  dpois(mu[i])                      
+
+      #Pearson residual for predicted data      
+      ENew[i] <- (YNew[i] - Exp[i]) / sqrt(Var[i]) 
+      
+      #Squared residuals
+      D[i]    <- E[i]^2                      
+      DNew[i] <- ENew[i]^2   
+     }          
+
+     #Sum of squared Pearson residuals:
+     Fit     <- sum(D[1:N])      
+     #Sum of squared predicted Pearson residuals:     
+     FitNew  <- sum(DNew[1:N])   
+}
+

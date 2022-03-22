@@ -1,0 +1,48 @@
+
+model{
+    #1A. Priors beta
+    for (i in 1:K) { beta[i] ~ dnorm(0, 0.0001)}
+
+    #1B. Priors random effects and sigma_Flock
+    # uniform or gamma sigmas (norm) and thetas (nb) in mixed models lead to poor mixing
+    # half-Cauchy is meant to be better, but JAGS doesn't have half-Cauchy
+    # if you divide two normally distributed random variables, you approximate
+    # a half-Cauchy, so that's what is happening below for the assignment of 
+    # sigma priors is to define two noramlly distributed random variables and
+    # and divide them to make a half-Cauchy distributed sigma.
+
+    for (i in 1:Nre) { a[i] ~ dnorm(0, tau_Flock)}
+    
+    num          ~ dnorm(0, 0.0016)      #<----half-Cauchy(25)
+    denom        ~ dnorm(0, 1)           #<----half-Cauchy(25)
+    sigma_Flock <- abs(num / denom)      #<----half-Cauchy(25)
+    tau_Flock   <- 1 / (sigma_Flock * sigma_Flock)
+
+
+    #2. Likelihood
+    for (i in 1:N) {
+      Y[i]        ~ dpois(mu[i])  
+      log(mu[i]) <- eta[i]  
+      eta[i]     <- inprod(beta[], X[i,]) + a[Flock[i]] 
+  
+      #3. New stuff: Discrepancy measures 
+      Exp[i] <- mu[i] 
+      Var[i] <- mu[i]
+      E[i]   <- (Y[i]  - Exp[i]) / sqrt(Var[i])    
+      #Pearson residuals
+     
+      YNew[i] ~  dpois(mu[i])                      
+      #Simulated data with mean/variance taken from the 
+      #fitted model
+      
+      ENew[i] <- (YNew[i] - Exp[i]) / sqrt(Var[i]) 
+      #Normalized residual for predicted data
+      
+      D[i]    <- pow(E[i], 2)                      
+      DNew[i] <- pow(ENew[i], 2)   
+     }          
+     Fit         <- sum(D[1:N])    #Sum of squared residuals  
+     FitNew      <- sum(DNew[1:N]) #Sum of squared predicted 
+                                   #residuals
+}
+

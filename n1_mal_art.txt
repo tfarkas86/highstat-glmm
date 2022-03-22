@@ -1,0 +1,25 @@
+
+  model{
+# priors
+
+b0 ~ dnorm(0, 0.0001)
+b.mal ~ dnorm(0, 0.0001)
+b.host ~ dnorm(0, 0.0001)
+
+lam ~ dunif(0, 20)
+
+# likelihood
+
+for (i in 1:N) {
+art[i] ~ dpois(mu[i])
+log(mu[i]) <- b0 + b.mal * mal[i] + b.host * host[i]
+
+}
+# residuals
+
+for (i in 1:N) {
+E[i] <- art[i] - mu[i]
+}
+
+  }
+    

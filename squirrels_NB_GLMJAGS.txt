@@ -1,0 +1,34 @@
+
+model{
+#1A. Priors beta and sigma
+for (i in 1:K) { beta[i] ~ dnorm(0, 0.0001)}
+#1B. Uniform prior for size (= k = theta = 1 /alpha = alpha)
+size ~ dunif(0, 5)  #k or theta
+#2. Likelihood
+for (i in 1:N) {
+#This is just how JAGS implements a NB distribution
+#It is based on general mathematical rules for a NB
+Y[i] ~  dnegbin(p[i], size)
+p[i] <- size / (size + mu[i])
+log(mu[i]) <- eta[i]
+eta[i]     <- inprod(beta[], X[i,])
+#= beta[1] * X[i,1] + .. + beta[K] * X[i,K]
+#3. Discrepancy measures
+#Pearson residuals
+Exp[i] <- mu[i]
+Var[i] <- mu[i] + mu[i] * mu[i] / size
+E[i]   <- (Y[i]  - Exp[i]) / sqrt(Var[i])
+#Simulated data with mean/variance taken from the fitted model
+YNew[i] ~  dnegbin(p[i], size)
+#Pearson residual for predicted data
+ENew[i] <- (YNew[i] - Exp[i]) / sqrt(Var[i])
+#Squared residuals
+D[i]    <- E[i]^2
+DNew[i] <- ENew[i]^2
+}
+#Sum of squared Pearson residuals and
+#squared predicted Pearson residuals
+Fit         <- sum(D[1:N])
+FitNew      <- sum(DNew[1:N])
+}
+

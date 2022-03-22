@@ -1,0 +1,31 @@
+
+model{
+    #1A. Priors beta and sigma
+    for (i in 1:K) { beta[i] ~ dnorm(0, 0.0001)}
+    
+    tau <- 1 / (sigma * sigma)
+    sigma ~ dunif(0, 10)
+
+    #1B. Priors random effects and sigma_Site
+    for (i in 1:Nre) { a[i] ~ dnorm(0, tau_Site)}
+    
+    tau_Site <- 1 / (sigma_Site * sigma_Site)
+    sigma_Site ~ dunif(0, 10)
+
+    icc <- sigma_Site^2 / (sigma_Site^2 + sigma^2)
+
+    #2. Likelihood
+    for (i in 1:N) {
+      Y[i]   ~ dnorm(mu[i], tau)   
+      mu[i]  <- eta[i] + a[Site[i]]
+      eta[i] <- inprod(beta[], X[i,]) 
+ 
+      #3. Discrepancy measures 
+      Exp[i] <- mu[i]      #Expected value of Y
+      Var[i] <- sigma^2    #Variance of Y 
+      E[i]   <- (Y[i]  - Exp[i]) / sqrt(Var[i])    
+      #Normalized residuals
+             
+     }          
+}
+

@@ -1,0 +1,21 @@
+
+model{
+#1A. Priors beta and sigma
+for (i in 1:K) { beta[i] ~ dnorm(0, 0.0001)}
+#1B. Priors random effects and sigma_Bear
+for (i in 1:Nre) { a[i] ~ dnorm(0, tau_Bear)}
+tau_Bear <- 1 / (sigma_Bear * sigma_Bear)
+num           ~ dnorm(0, 0.0016)    #<----half-Cauchy(25)
+denom         ~ dnorm(0, 1)         #<----half-Cauchy(25)
+sigma_Bear   <- abs(num / denom)    #<----half-Cauchy(25)
+#1C. Prior for r parameter of Gamma distribution
+r ~ dunif(0, 10)
+#2. Likelihood
+for (i in 1:N) {
+Y[i]        ~ dgamma(r, mu.eff[i])
+mu.eff[i]  <- r / mu[i]
+log(mu[i]) <- eta[i]
+eta[i]     <- inprod(beta[], X[i,]) + a[Bear[i]]
+}
+}
+
